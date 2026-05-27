@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-// 1. Define the TypeScript type for the strict Vercel compiler
 type ScannedItem = {
   id: number;
   name: string;
@@ -12,40 +11,34 @@ type ScannedItem = {
   assignedTo: string[];
 };
 
-// Replaced empty arrays with ["Me"] to force TypeScript to recognize string arrays
-const MOCK_SCANNED_ITEMS = [
-  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: ["Me"] },
-  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: ["Me"] },
-  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: ["Me"] },
-  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: ["Me"] },
-];
-
 export default function Home() {
   const [step, setStep] = useState<"upload" | "scanning" | "review" | "split" | "upi">("upload");
   
-  // 2. Tell useState to explicitly use the ScannedItem array type
-  const [items, setItems] = useState<ScannedItem[]>(MOCK_SCANNED_ITEMS);
+  const [items, setItems] = useState<ScannedItem[]>([
+    { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: ["Me"] },
+    { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: ["Me"] },
+    { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: ["Me"] },
+    { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: ["Me"] },
+  ]);
+  
   const [friends, setFriends] = useState(["Me", "Rahul", "Priya"]);
   const [newFriend, setNewFriend] = useState("");
   
-  // New States for Image Upload and UPI Links
   const [upiId, setUpiId] = useState("");
   const [receiverName, setReceiverName] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle Image Selection
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setImagePreview(imageUrl);
-      setStep("scanning"); // Move to scanning automatically once image is selected
+      setStep("scanning");
     }
   };
 
-  // Simulate AI scanning delay
   useEffect(() => {
     if (step === "scanning") {
       const timer = setTimeout(() => setStep("review"), 3500);
@@ -92,9 +85,8 @@ export default function Home() {
     }
   };
 
-  // Calculations
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  const gst = subtotal * 0.05; // 5% GST
+  const gst = subtotal * 0.05;
   const total = subtotal + gst;
 
   const getSplitData = () => {
@@ -119,11 +111,9 @@ export default function Home() {
     return splitRecord;
   };
 
-  // Generate UPI Deep Link
   const generateUpiLink = (amount: number) => {
     const formattedAmount = amount.toFixed(2);
     const encodedName = encodeURIComponent(receiverName || "SplitPay User");
-    // Standard UPI intent URI format
     return `upi://pay?pa=${upiId}&pn=${encodedName}&am=${formattedAmount}&cu=INR`;
   };
 
@@ -131,14 +121,12 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans text-slate-800">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
-        {/* Header */}
         <div className="bg-orange-500 p-6 text-white text-center rounded-b-3xl shadow-md">
           <h1 className="text-2xl font-bold tracking-wide">SplitPay AI</h1>
           <p className="text-orange-100 text-sm mt-1">Smart Bill Splitter</p>
         </div>
 
         <div className="p-6">
-          {/* STEP 1: UPLOAD */}
           {step === "upload" && (
             <div className="text-center space-y-6 py-8">
               <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
@@ -149,7 +137,6 @@ export default function Home() {
                 <p className="text-gray-500 text-sm">Select an image from your device gallery or camera.</p>
               </div>
               
-              {/* Hidden File Input */}
               <input 
                 type="file" 
                 accept="image/*" 
@@ -167,7 +154,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* STEP 2: SCANNING */}
           {step === "scanning" && (
             <div className="text-center space-y-6 py-8">
               {imagePreview && (
@@ -181,7 +167,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* STEP 3: REVIEW */}
           {step === "review" && (
             <div className="space-y-4">
               <div className="mb-4">
@@ -231,7 +216,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* STEP 4: SPLIT AMONG FRIENDS */}
           {step === "split" && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold">Who ate what?</h2>
@@ -284,7 +268,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* STEP 5: FINAL CALCULATION & LIVE UPI */}
           {step === "upi" && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-center">Summary</h2>
@@ -304,7 +287,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* UPI Setup Section */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Your UPI Details (To receive money)
@@ -325,12 +307,11 @@ export default function Home() {
                 />
               </div>
 
-              {/* Individual Payment Links & QR Codes */}
               <div>
                 <h3 className="font-semibold mb-3">Live Payment Links & QR Codes:</h3>
                 <div className="space-y-3">
                   {Object.entries(getSplitData()).map(([friend, amount]) => {
-                    if (friend === "Me" || amount <= 0) return null; // Skip self and 0 amounts
+                    if (friend === "Me" || amount <= 0) return null;
                     const paymentUrl = upiId ? generateUpiLink(amount) : "#";
                     
                     return (
@@ -359,7 +340,6 @@ export default function Home() {
                           </a>
                         </div>
 
-                        {/* QR Code fallback for Desktop users */}
                         {upiId && (
                           <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col items-center justify-center bg-gray-50 p-2 rounded-lg">
                             <p className="text-xs text-gray-400 mb-2">Or scan QR code using any UPI app:</p>
