@@ -1,7 +1,58 @@
+// 1. Add this import at the very top of page.tsx
+import { QRCodeSVG } from "qrcode.react";
+
+// 2. Find the individual payment link loop inside Step 5 (search for "Live Payment Links:")
+// Replace that section with this enhanced UI that includes a toggleable QR Code:
+
+<div>
+  <h3 className="font-semibold mb-3">Live Payment Links & QR Codes:</h3>
+  <div className="space-y-3">
+    {Object.entries(getSplitData()).map(([friend, amount]) => {
+      if (friend === "Me" || amount <= 0) return null;
+      const paymentUrl = upiId ? generateUpiLink(amount) : "#";
+      
+      return (
+        <div key={friend} className="p-4 bg-white border border-gray-200 shadow-sm rounded-xl space-y-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="font-medium block">{friend}</span>
+              <span className="font-bold text-orange-600 text-lg">₹{amount.toFixed(2)}</span>
+            </div>
+            
+            <a
+              href={paymentUrl}
+              onClick={(e) => {
+                if (!upiId) {
+                  e.preventDefault();
+                  alert("Please enter your UPI ID first!");
+                }
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                upiId 
+                  ? "bg-green-500 hover:bg-green-600 text-white shadow-md" 
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Pay on Mobile 📱
+            </a>
+          </div>
+
+          {/* QR Code fallback for Desktop users */}
+          {upiId && (
+            <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col items-center justify-center bg-gray-50 p-2 rounded-lg">
+              <p className="text-xs text-gray-400 mb-2">Or scan QR code using any UPI app:</p>
+              <QRCodeSVG value={paymentUrl} size={120} includeMargin={true} />
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</div>
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { QRCodeSVG } from "qrcode.react";
 
 // Mock AI Data simulating a scanned receipt
 const MOCK_SCANNED_ITEMS = [
@@ -314,47 +365,36 @@ export default function Home() {
                 />
               </div>
 
-              {/* Individual Payment Links & QR Codes */}
+              {/* Individual Payment Links */}
               <div>
-                <h3 className="font-semibold mb-3">Live Payment Links & QR Codes:</h3>
+                <h3 className="font-semibold mb-3">Live Payment Links:</h3>
                 <div className="space-y-3">
                   {Object.entries(getSplitData()).map(([friend, amount]) => {
                     if (friend === "Me" || amount <= 0) return null; // Skip self and 0 amounts
-                    const paymentUrl = upiId ? generateUpiLink(amount) : "#";
                     
                     return (
-                      <div key={friend} className="p-4 bg-white border border-gray-200 shadow-sm rounded-xl space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="font-medium block">{friend}</span>
-                            <span className="font-bold text-orange-600 text-lg">₹{amount.toFixed(2)}</span>
-                          </div>
-                          
-                          <a
-                            href={paymentUrl}
-                            onClick={(e) => {
-                              if (!upiId) {
-                                e.preventDefault();
-                                alert("Please enter your UPI ID first to generate links!");
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                              upiId 
-                                ? "bg-green-500 hover:bg-green-600 text-white shadow-md" 
-                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            }`}
-                          >
-                            Pay on Mobile 📱
-                          </a>
+                      <div key={friend} className="flex justify-between items-center p-3 bg-white border border-gray-200 shadow-sm rounded-lg">
+                        <div>
+                          <span className="font-medium block">{friend}</span>
+                          <span className="font-bold text-orange-600">₹{amount.toFixed(2)}</span>
                         </div>
-
-                        {/* QR Code fallback for Desktop users */}
-                        {upiId && (
-                          <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col items-center justify-center bg-gray-50 p-2 rounded-lg">
-                            <p className="text-xs text-gray-400 mb-2">Or scan QR code using any UPI app:</p>
-                            <QRCodeSVG value={paymentUrl} size={120} includeMargin={true} />
-                          </div>
-                        )}
+                        
+                        <a
+                          href={upiId ? generateUpiLink(amount) : "#"}
+                          onClick={(e) => {
+                            if (!upiId) {
+                              e.preventDefault();
+                              alert("Please enter your UPI ID first to generate links!");
+                            }
+                          }}
+                          className={`px-4 py-2 rounded-lg font-semibold text-sm flex items-center transition-all ${
+                            upiId 
+                              ? "bg-green-500 hover:bg-green-600 text-white shadow-md" 
+                              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          Pay Now 📱
+                        </a>
                       </div>
                     );
                   })}

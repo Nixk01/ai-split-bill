@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import React, { useState, useEffect } from "react";
 
 // Mock AI Data simulating a scanned receipt
 const MOCK_SCANNED_ITEMS = [
-  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] as string[] },
-  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] as string[] },
-  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] as string[] },
-  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] as string[] },
+  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] },
+  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] }, // Simulated unclear item
+  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] },
+  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] }, // Simulated unclear item
 ];
 
 export default function Home() {
@@ -16,28 +15,12 @@ export default function Home() {
   const [items, setItems] = useState(MOCK_SCANNED_ITEMS);
   const [friends, setFriends] = useState(["Me", "Rahul", "Priya"]);
   const [newFriend, setNewFriend] = useState("");
-  
-  // New States for Image Upload and UPI Links
   const [upiId, setUpiId] = useState("");
-  const [receiverName, setReceiverName] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle Image Selection
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImagePreview(imageUrl);
-      setStep("scanning"); // Move to scanning automatically once image is selected
-    }
-  };
 
   // Simulate AI scanning delay
   useEffect(() => {
     if (step === "scanning") {
-      const timer = setTimeout(() => setStep("review"), 3500);
+      const timer = setTimeout(() => setStep("review"), 3000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -49,7 +32,7 @@ export default function Home() {
           return {
             ...item,
             [field]: field === "price" ? Number(value) || 0 : value,
-            confidence: "high",
+            confidence: "high", // Mark as resolved once edited
           };
         }
         return item;
@@ -83,7 +66,7 @@ export default function Home() {
 
   // Calculations
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  const gst = subtotal * 0.05; // 5% GST
+  const gst = subtotal * 0.05; // Assuming 5% GST
   const total = subtotal + gst;
 
   const getSplitData = () => {
@@ -91,13 +74,14 @@ export default function Home() {
     friends.forEach((f) => (splitRecord[f] = 0));
 
     items.forEach((item) => {
-      const assignees = item.assignedTo.length > 0 ? item.assignedTo : friends;
+      const assignees = item.assignedTo.length > 0 ? item.assignedTo : friends; // Default to everyone if unassigned
       const costPerPerson = item.price / assignees.length;
       assignees.forEach((f) => {
         splitRecord[f] += costPerPerson;
       });
     });
 
+    // Add proportional GST
     friends.forEach((f) => {
       if (splitRecord[f] > 0) {
         const proportion = splitRecord[f] / subtotal;
@@ -108,19 +92,11 @@ export default function Home() {
     return splitRecord;
   };
 
-  // Generate UPI Deep Link
-  const generateUpiLink = (amount: number) => {
-    const formattedAmount = amount.toFixed(2);
-    const encodedName = encodeURIComponent(receiverName || "SplitPay User");
-    // Standard UPI intent URI format
-    return `upi://pay?pa=${upiId}&pn=${encodedName}&am=${formattedAmount}&cu=INR`;
-  };
-
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans text-slate-800">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
-        {/* Header */}
+        {/* Header (BHIM App Style) */}
         <div className="bg-orange-500 p-6 text-white text-center rounded-b-3xl shadow-md">
           <h1 className="text-2xl font-bold tracking-wide">SplitPay AI</h1>
           <p className="text-orange-100 text-sm mt-1">Smart Bill Splitter</p>
@@ -131,46 +107,31 @@ export default function Home() {
           {step === "upload" && (
             <div className="text-center space-y-6 py-8">
               <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-4xl">📸</span>
+                <span className="text-4xl">🧾</span>
               </div>
               <div>
                 <h2 className="text-xl font-semibold mb-2">Upload Restaurant Bill</h2>
-                <p className="text-gray-500 text-sm">Select an image from your device gallery or camera.</p>
+                <p className="text-gray-500 text-sm">Our AI will extract items, INR prices, and calculate GST.</p>
               </div>
-              
-              {/* Hidden File Input */}
-              <input 
-                type="file" 
-                accept="image/*" 
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                className="hidden" 
-              />
-              
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setStep("scanning")}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-all"
               >
-                Choose Image
+                Capture or Upload Receipt
               </button>
             </div>
           )}
 
           {/* STEP 2: SCANNING */}
           {step === "scanning" && (
-            <div className="text-center space-y-6 py-8">
-              {imagePreview && (
-                <div className="w-32 h-40 mx-auto rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm relative">
-                  <img src={imagePreview} alt="Receipt" className="object-cover w-full h-full opacity-50" />
-                  <div className="absolute inset-0 bg-orange-500/20 animate-pulse"></div>
-                </div>
-              )}
-              <div className="animate-spin w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full mx-auto"></div>
-              <h2 className="text-lg font-medium text-orange-600 animate-pulse">Scanning Receipt...</h2>
+            <div className="text-center space-y-4 py-12">
+              <div className="animate-spin w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto"></div>
+              <h2 className="text-lg font-medium text-orange-600 animate-pulse">AI is reading the receipt...</h2>
+              <p className="text-gray-400 text-sm">Detecting items, prices in ₹, and taxes.</p>
             </div>
           )}
 
-          {/* STEP 3: REVIEW */}
+          {/* STEP 3: REVIEW (Fixing "Things aren't clear") */}
           {step === "review" && (
             <div className="space-y-4">
               <div className="mb-4">
@@ -225,6 +186,7 @@ export default function Home() {
             <div className="space-y-6">
               <h2 className="text-lg font-bold">Who ate what?</h2>
               
+              {/* Add Friends */}
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -238,6 +200,7 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* Assign Items */}
               <div className="space-y-4 max-h-64 overflow-y-auto">
                 {items.map((item) => (
                   <div key={item.id} className="border border-gray-100 p-3 rounded-xl bg-white shadow-sm">
@@ -273,7 +236,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* STEP 5: FINAL CALCULATION & LIVE UPI */}
+          {/* STEP 5: FINAL CALCULATION & UPI */}
           {step === "upi" && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-center">Summary</h2>
@@ -293,79 +256,38 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* UPI Setup Section */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Your UPI Details (To receive money)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Your Name (e.g., Nikunj)"
-                  value={receiverName}
-                  onChange={(e) => setReceiverName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm"
-                />
-                <input
-                  type="text"
-                  placeholder="UPI ID (e.g., number@upi)"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm"
-                />
+              <div>
+                <h3 className="font-semibold mb-3">Amount to Collect:</h3>
+                <div className="space-y-2">
+                  {Object.entries(getSplitData()).map(([friend, amount]) => (
+                    <div key={friend} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">{friend}</span>
+                      <span className="font-bold text-orange-600">₹{amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Individual Payment Links & QR Codes */}
-              <div>
-                <h3 className="font-semibold mb-3">Live Payment Links & QR Codes:</h3>
-                <div className="space-y-3">
-                  {Object.entries(getSplitData()).map(([friend, amount]) => {
-                    if (friend === "Me" || amount <= 0) return null; // Skip self and 0 amounts
-                    const paymentUrl = upiId ? generateUpiLink(amount) : "#";
-                    
-                    return (
-                      <div key={friend} className="p-4 bg-white border border-gray-200 shadow-sm rounded-xl space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="font-medium block">{friend}</span>
-                            <span className="font-bold text-orange-600 text-lg">₹{amount.toFixed(2)}</span>
-                          </div>
-                          
-                          <a
-                            href={paymentUrl}
-                            onClick={(e) => {
-                              if (!upiId) {
-                                e.preventDefault();
-                                alert("Please enter your UPI ID first to generate links!");
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                              upiId 
-                                ? "bg-green-500 hover:bg-green-600 text-white shadow-md" 
-                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            }`}
-                          >
-                            Pay on Mobile 📱
-                          </a>
-                        </div>
-
-                        {/* QR Code fallback for Desktop users */}
-                        {upiId && (
-                          <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col items-center justify-center bg-gray-50 p-2 rounded-lg">
-                            <p className="text-xs text-gray-400 mb-2">Or scan QR code using any UPI app:</p>
-                            <QRCodeSVG value={paymentUrl} size={120} includeMargin={true} />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Where should they send the money?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g., name@okicici"
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  />
+                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center min-w-[100px]">
+                    {upiId ? "Generate Link" : "Done"}
+                  </button>
                 </div>
               </div>
               
               <button
-                onClick={() => {
-                  setStep("upload");
-                  setImagePreview(null);
-                }}
+                onClick={() => setStep("upload")}
                 className="w-full text-center text-sm text-gray-400 mt-4 underline"
               >
                 Start Over
