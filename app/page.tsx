@@ -12,12 +12,12 @@ type ScannedItem = {
   assignedTo: string[];
 };
 
-// Mock AI Data simulating a scanned receipt
+// Force TypeScript to recognize the empty arrays as string arrays
 const MOCK_SCANNED_ITEMS: ScannedItem[] = [
-  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] },
-  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] },
-  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] },
-  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] },
+  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] as string[] },
+  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] as string[] },
+  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] as string[] },
+  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] as string[] },
 ];
 
 export default function Home() {
