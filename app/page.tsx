@@ -3,17 +3,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
+// 1. Define the TypeScript type for the strict Vercel compiler
+type ScannedItem = {
+  id: number;
+  name: string;
+  price: number;
+  confidence: string;
+  assignedTo: string[];
+};
+
 // Mock AI Data simulating a scanned receipt
-const MOCK_SCANNED_ITEMS = [
-  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] as string[] },
-  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] as string[] },
-  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] as string[] },
-  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] as string[] },
+const MOCK_SCANNED_ITEMS: ScannedItem[] = [
+  { id: 1, name: "Paneer Tikka Masala", price: 350, confidence: "high", assignedTo: [] },
+  { id: 2, name: "Garl!c Na@n", price: 120, confidence: "low", assignedTo: [] },
+  { id: 3, name: "Cold Coffee", price: 180, confidence: "high", assignedTo: [] },
+  { id: 4, name: "M!neral W*ter", price: 40, confidence: "low", assignedTo: [] },
 ];
 
 export default function Home() {
   const [step, setStep] = useState<"upload" | "scanning" | "review" | "split" | "upi">("upload");
-  const [items, setItems] = useState(MOCK_SCANNED_ITEMS);
+  
+  // 2. Tell useState to explicitly use the ScannedItem array type
+  const [items, setItems] = useState<ScannedItem[]>(MOCK_SCANNED_ITEMS);
   const [friends, setFriends] = useState(["Me", "Rahul", "Priya"]);
   const [newFriend, setNewFriend] = useState("");
   
@@ -300,7 +311,7 @@ export default function Home() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Your Name (e.g., Nikunj)"
+                  placeholder="Your Name (e.g., Your Name)"
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm"
